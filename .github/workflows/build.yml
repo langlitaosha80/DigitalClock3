@@ -1,0 +1,74 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip openjdk-17-jdk unzip curl git
+
+      - name: Set up Java
+        env:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+
+      - name: Download Android SDK
+        run: |
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk/cmdline-tools
+          curl -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip cmdline-tools.zip
+          mv cmdline-tools latest
+          chmod +x latest/bin/sdkmanager
+
+      - name: Accept licenses and install SDK components
+        run: |
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          yes | sdkmanager --licenses
+          sdkmanager --install "platforms;android-33" "build-tools;33.0.0" "platform-tools"
+
+      - name: Install Python dependencies
+        run: |
+          pip install kivy==2.2.0 buildozer cython
+
+      - name: Build APK
+        env:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+          ANDROID_HOME: $HOME/android-sdk
+        run: |
+          buildozer -v android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: digital-clock-apk
+          path: bin/*.apk
+
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: digital-clock-apk
+          path: bin/
+
+      - name: List APK files
+        run: |
+          ls -la bin/

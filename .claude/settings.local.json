@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/home/10035687@zte.intra/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager:*)"
+    ]
+  }
+}
