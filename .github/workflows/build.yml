@@ -44,7 +44,7 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
           yes | sdkmanager --licenses
-          sdkmanager --install "platforms;android-33" "build-tools;33.0.0" "platform-tools"
+          yes | sdkmanager --install "platforms;android-33" "build-tools;33.0.0" "platform-tools" "ndk;25b"
 
       - name: Install Python dependencies
         run: |
