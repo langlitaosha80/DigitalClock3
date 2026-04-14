@@ -16,6 +16,13 @@ from kivy.clock import Clock
 from kivy.properties import ListProperty, NumericProperty
 from kivy.graphics import Color, Rectangle
 from datetime import datetime
+import os
+
+# Font path for Chinese characters (Linux desktop)
+# On Android, system fonts will be used automatically
+CHINESE_FONT = '/usr/share/fonts/wqy-microhei/wqy-microhei.ttc'
+if not os.path.exists(CHINESE_FONT):
+    CHINESE_FONT = 'DroidSansMono'  # Fallback to default font
 
 # Color presets
 COLORS = {
@@ -35,12 +42,17 @@ class ClockLabel(Label):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.bind(size=self._update_rect, pos=self._update_rect)
+        self.bind(bg_color=self._update_rect)
 
     def _update_rect(self, *args):
         self.canvas.before.clear()
         with self.canvas.before:
             Color(*self.bg_color)
             self.rect = Rectangle(size=self.size, pos=self.pos)
+
+    def on_bg_color(self, *args):
+        """Called when bg_color changes"""
+        pass
 
     def set_bg_color(self, color):
         self.bg_color = color
@@ -66,7 +78,7 @@ class DigitalClockApp(App):
             size_hint=(1, 1),
         )
         with self.clock_container.canvas.before:
-            Color(*self.bg_color)
+            self.bg_color_obj = Color(*self.bg_color)
             self.bg_rect = Rectangle(size=self.clock_container.size, pos=self.clock_container.pos)
 
         self.clock_container.bind(size=self._update_bg_rect, pos=self._update_bg_rect)
@@ -79,7 +91,8 @@ class DigitalClockApp(App):
             color=self.text_color,
             halign='center',
             valign='middle',
-            bg_color=self.bg_color
+            bg_color=self.bg_color,
+            font_name=CHINESE_FONT
         )
         self.clock_container.add_widget(self.clock_label)
         main_layout.add_widget(self.clock_container)
@@ -89,7 +102,8 @@ class DigitalClockApp(App):
             text='设置',
             size_hint=(1, None),
             height='50dp',
-            on_press=self.show_settings
+            on_press=self.show_settings,
+            font_name=CHINESE_FONT
         )
         main_layout.add_widget(settings_btn)
 
@@ -112,13 +126,14 @@ class DigitalClockApp(App):
     def update_bg_color(self, color):
         """Update background color"""
         self.bg_color = color
-        self.bg_rect.rgba = color
+        self.clock_label.set_bg_color(color)
+        # Update clock container background
+        self.bg_color_obj.rgba = color
 
     def update_text_color(self, color):
         """Update text color"""
         self.text_color = color
         self.clock_label.color = color
-        self.clock_label.set_bg_color(color)
 
     def show_settings(self, instance):
         """Show settings popup"""
@@ -127,13 +142,14 @@ class DigitalClockApp(App):
         # Always on top toggle
         self.pin_btn = Button(
             text='关闭置顶',
-            on_press=self.toggle_pin
+            on_press=self.toggle_pin,
+            font_name=CHINESE_FONT
         )
-        content.add_widget(Label(text='置顶模式:'))
+        content.add_widget(Label(text='置顶模式:', font_name=CHINESE_FONT))
         content.add_widget(self.pin_btn)
 
         # Background color selector
-        content.add_widget(Label(text='背景色:'))
+        content.add_widget(Label(text='背景色:', font_name=CHINESE_FONT))
         bg_colors_layout = BoxLayout(size_hint_y=None, height='50dp')
         for color_name, color_value in COLORS.items():
             btn = Button(
@@ -145,7 +161,7 @@ class DigitalClockApp(App):
         content.add_widget(bg_colors_layout)
 
         # Text color selector
-        content.add_widget(Label(text='文字色:'))
+        content.add_widget(Label(text='文字色:', font_name=CHINESE_FONT))
         text_colors_layout = BoxLayout(size_hint_y=None, height='50dp')
         for color_name, color_value in COLORS.items():
             btn = Button(
@@ -161,15 +177,17 @@ class DigitalClockApp(App):
             text='关闭',
             size_hint_y=None,
             height='50dp',
-            on_press=lambda x: popup.dismiss()
+            on_press=lambda x: popup.dismiss(),
+            font_name=CHINESE_FONT
         )
         content.add_widget(close_btn)
-        content.add_widget(Label())
+        content.add_widget(Label(font_name=CHINESE_FONT))
 
         popup = Popup(
             title='设置',
             content=content,
-            size_hint=(0.8, 0.6)
+            size_hint=(0.8, 0.6),
+            title_font=CHINESE_FONT
         )
         popup.open()
 
